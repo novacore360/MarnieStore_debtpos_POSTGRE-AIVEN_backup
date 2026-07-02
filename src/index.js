@@ -46,8 +46,28 @@ function buildSSLConfig() {
   return { rejectUnauthorized: false };
 }
 
+// `pg` derives its OWN ssl config from a `?sslmode=...` query param in the
+// connection string, and that SILENTLY OVERRIDES the explicit `ssl` object
+// passed to Pool below — falling back to Node's default system CA trust
+// store (which doesn't include Aiven's CA), causing a "self-signed
+// certificate in certificate chain" error even when PG_CA_CERT is set
+// correctly. Aiven's default "Service URI" includes `?sslmode=require`, so
+// we strip it here and let buildSSLConfig() above be the single source of
+// truth for TLS behavior.
+function stripSslModeParam(connectionString) {
+  if (!connectionString) return connectionString;
+  try {
+    const url = new URL(connectionString);
+    url.searchParams.delete("sslmode");
+    return url.toString();
+  } catch (err) {
+    log("warn", `Could not parse DATABASE_URL to strip sslmode param: ${err.message}`);
+    return connectionString;
+  }
+}
+
 const pgPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: stripSslModeParam(process.env.DATABASE_URL),
   ssl: buildSSLConfig(),
   max: parseInt(process.env.PG_POOL_MAX || "5", 10),
 });
