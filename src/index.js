@@ -789,11 +789,30 @@ async function runSlotOrchestrator(triggeredBy) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 13. HTTP SERVER (includes /admin metadata endpoint)
+// 13. HTTP SERVER WITH CORS SUPPORT (includes /admin metadata endpoint)
 // ═════════════════════════════════════════════════════════════════════════════
+
+// Helper function to add CORS headers to responses
+function setCorsHeaders(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours cache for preflight
+}
 
 const server = http.createServer((req, res) => {
   const url = req.url;
+
+  // Handle preflight OPTIONS request (browsers send this before actual request)
+  if (req.method === 'OPTIONS') {
+    setCorsHeaders(res);
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+
+  // Add CORS headers to all responses
+  setCorsHeaders(res);
 
   if (url === "/" || url === "/health") {
     runSlotOrchestrator("http_health_check").catch((err) =>
