@@ -1,0 +1,19 @@
+{
+  "name": "firebase-pos-backup",
+  "version": "2.0.0",
+  "description": "Scheduled Firestore -> PostgreSQL (Aiven) backup service for POS system",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "firebase": "^10.12.0",
+    "pg": "^8.12.0",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
